@@ -160,10 +160,12 @@ if st.button("Kapsamlı Analizi Başlat"):
                 with col_sag:
                     st.subheader("🤖 Yapay Zeka Buffett Raporu")
                     ai_raporu = yapay_zeka_buffett_analizi(sirket_adi, sektor, info.get("longBusinessSummary", ""))
-                    if ai_raporu:
+                    
+                    # Hatanın önünü kesen güvenli kontrol bloku:
+                    if ai_raporu is not None:
                         st.info(ai_raporu)
                     else:
-                        st.warning("Şu an Google API yoğunluğu nedeniyle rapor üretilemedi. Lütfen 1 dakika sonra tekrar deneyin.")
+                        st.warning("⚠️ Yapay zeka analizi şu an üretilemedi. Google API kota sınırına takılmış veya yoğun olabilir. Lütfen 1-2 dakika sonra tekrar deneyin.")
                         
         except Exception as e:
             st.error(f"Bir hata oluştu: {e}")
