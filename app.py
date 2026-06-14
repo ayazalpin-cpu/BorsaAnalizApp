@@ -70,7 +70,7 @@ def yapay_zeka_buffett_analizi(sirket_adi, sektor, is_tanimi):
         response = model.generate_content(prompt)
         return response.text.strip()
     except Exception as e:
-        return f"AI Analizi başarısız: {e}"
+        st.error(f"Yapay zeka analizi başarısız: {e}")
 
 def rakip_verilerini_topla(ana_ticker, rakipler):
     veriler = []
