@@ -64,12 +64,12 @@ def yapay_zeka_buffett_analizi(sirket_adi, sektor, is_tanimi):
     Lütfen bu şirketi Ekonomik Hendek, Anlaşılabilirlik ve Genel Buffett Kararı açısından 3 kısa başlıkla analiz et. Türkçe olsun.
     """
     try:
-        # Kota limitlerine daha dayanıklı olması için 1.5-flash modeline çekildi
         model = genai.GenerativeModel('gemini-1.5-flash')
         response = model.generate_content(prompt)
-        return response.text.strip()
-    except Exception as e:
-        st.error(f"Yapay zeka analizi kotaya veya hataya takıldı: {e}")
+        if response and hasattr(response, 'text') and response.text:
+            return response.text.strip()
+        return None
+    except:
         return None
 
 def rakip_verilerini_topla(ana_ticker, rakipler):
@@ -103,14 +103,14 @@ if st.button("Kapsamlı Analizi Başlat"):
             hisse = yf.Ticker(ticker)
             info = hisse.info
             
-            if "currentPrice" not in info:
+            if not info or "currentPrice" not in info:
                 st.error("Hisse bulunamadı. Lütfen sembolü kontrol edin.")
             else:
                 sirket_adi = info.get("longName", ticker)
                 sektor = info.get("sector", "Bilinmiyor")
                 guncel_fiyat = info.get("currentPrice", 0)
-                roe_yuzde = (info.get("returnOnEquity", 0) * 100)
-                marj_yuzde = (info.get("grossMargins", 0) * 100)
+                roe_yuzde = (info.get("returnOnEquity", 0) * 100) if info.get("returnOnEquity") else 0
+                marj_yuzde = (info.get("grossMargins", 0) * 100) if info.get("grossMargins") else 0
                 fk = info.get("trailingPE", "Veri Yok")
                 
                 st.header(f"📊 {sirket_adi} ({ticker}) Finansal Sağlık")
@@ -148,24 +148,22 @@ if st.button("Kapsamlı Analizi Başlat"):
                 with col_sol:
                     st.subheader("🪙 İçsel Değer (DCF Modeli)")
                     icsel_deger, guvenlik_marji = dcf_degerleme_hesapla(info)
-                    if icsel_deger:
+                    if icsel_deger is not None:
                         st.write(f"**Şirketin Olması Gereken Gerçek Ederi:** {icsel_deger} $")
                         if guvenlik_marji > 0:
                             st.success(f"🎉 Güvenlik Marjı: %{guvenlik_marji} UCUZ!")
                         else:
                             st.error(f"⚠️ Güvenlik Marjı: %{guvenlik_marji} PAHALI!")
                     else:
-                        st.info("Nakit akışları yetersiz olduğundan DCF hesaplanamadı.")
+                        st.info("Nakit akışları yetersiz olduğundan veya eksik veriden dolayı DCF hesaplanamadı.")
                         
                 with col_sag:
                     st.subheader("🤖 Yapay Zeka Buffett Raporu")
                     ai_raporu = yapay_zeka_buffett_analizi(sirket_adi, sektor, info.get("longBusinessSummary", ""))
-                    
-                    # Hatanın önünü kesen güvenli kontrol bloku:
-                    if ai_raporu is not None:
+                    if ai_raporu:
                         st.info(ai_raporu)
                     else:
-                        st.warning("⚠️ Yapay zeka analizi şu an üretilemedi. Google API kota sınırına takılmış veya yoğun olabilir. Lütfen 1-2 dakika sonra tekrar deneyin.")
+                        st.warning("⚠️ Yapay zeka analizi şu an üretilemedi. Google API kota sınırına takılmış veya yoğun olabilir. Ancak grafikleriniz ve finansal verileriniz yukarıda başarıyla listelenmiştir.")
                         
         except Exception as e:
-            st.error(f"Bir hata oluştu: {e}")
+            st.error(f"Veriler okunurken teknik bir sorun oluştu: {e}")
