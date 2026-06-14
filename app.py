@@ -5,8 +5,6 @@ import google.generativeai as genai
 import plotly.express as px
 
 # --- 1. YAPAY ZEKA VE SAYFA AYARLARI ---
-# Sistem internete yüklendiğinde şifreyi kasadan (secrets) okuyacak,
-# eğer yereldeysen tırnak içindeki kendi anahtarını kullanmaya devam edecek.
 GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=GEMINI_API_KEY)
 
@@ -27,11 +25,11 @@ RAKIP_HARITASI = {
 def dcf_degerleme_hesapla(info):
     try:
         serbest_nakit_akisi = info.get("freeCashflow")
-        hisse_sayisi = info.get("sharesOutstanding")
+        hise_sayisi = info.get("sharesOutstanding")
         toplam_nakit = info.get("totalCash", 0)
         toplam_borc = info.get("totalDebt", 0)
         
-        if not serbest_nakit_akisi or not hisse_sayisi or serbest_nakit_akisi <= 0:
+        if not serbest_nakit_akisi or not hise_sayisi or serbest_nakit_akisi <= 0:
             return None, None
         
         buyume_orani = 0.10
@@ -50,7 +48,7 @@ def dcf_degerleme_hesapla(info):
         
         toplam_sirket_degeri = toplam_indirgenmis_deger + indirgenmis_terminal_deger
         ozsermaye_degeri = toplam_sirket_degeri + toplam_nakit - toplam_borc
-        icsel_deger = ozsermaye_degeri / hisse_sayisi
+        icsel_deger = ozsermaye_degeri / hise_sayisi
         guncel_fiyat = info.get("currentPrice", 1)
         guvenlik_marji = ((icsel_deger - guncel_fiyat) / icsel_deger) * 100
         
@@ -66,11 +64,13 @@ def yapay_zeka_buffett_analizi(sirket_adi, sektor, is_tanimi):
     Lütfen bu şirketi Ekonomik Hendek, Anlaşılabilirlik ve Genel Buffett Kararı açısından 3 kısa başlıkla analiz et. Türkçe olsun.
     """
     try:
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        # Kota limitlerine daha dayanıklı olması için 1.5-flash modeline çekildi
+        model = genai.GenerativeModel('gemini-1.5-flash')
         response = model.generate_content(prompt)
         return response.text.strip()
     except Exception as e:
-        st.error(f"Yapay zeka analizi başarısız: {e}")
+        st.error(f"Yapay zeka analizi kotaya veya hataya takıldı: {e}")
+        return None
 
 def rakip_verilerini_topla(ana_ticker, rakipler):
     veriler = []
@@ -160,7 +160,10 @@ if st.button("Kapsamlı Analizi Başlat"):
                 with col_sag:
                     st.subheader("🤖 Yapay Zeka Buffett Raporu")
                     ai_raporu = yapay_zeka_buffett_analizi(sirket_adi, sektor, info.get("longBusinessSummary", ""))
-                    st.info(ai_raporu)
-                    
+                    if ai_raporu:
+                        st.info(ai_raporu)
+                    else:
+                        st.warning("Şu an Google API yoğunluğu nedeniyle rapor üretilemedi. Lütfen 1 dakika sonra tekrar deneyin.")
+                        
         except Exception as e:
             st.error(f"Bir hata oluştu: {e}")
