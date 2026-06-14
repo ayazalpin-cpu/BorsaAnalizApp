@@ -8,7 +8,7 @@ import plotly.express as px
 # Sistem internete yüklendiğinde şifreyi kasadan (secrets) okuyacak,
 # eğer yereldeysen tırnak içindeki kendi anahtarını kullanmaya devam edecek.
 try:
-    GEMINI_API_KEY = st.secrets["GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]"]
+   GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=GEMINI_API_KEY)
 
 st.set_page_config(page_title="Buffett AI Pro", layout="wide", page_icon="🚀")
