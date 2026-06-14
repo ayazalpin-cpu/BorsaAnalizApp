@@ -66,7 +66,7 @@ def yapay_zeka_buffett_analizi(sirket_adi, sektor, is_tanimi):
     Lütfen bu şirketi Ekonomik Hendek, Anlaşılabilirlik ve Genel Buffett Kararı açısından 3 kısa başlıkla analiz et. Türkçe olsun.
     """
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.0-flash')
         response = model.generate_content(prompt)
         return response.text.strip()
     except Exception as e:
