@@ -61,10 +61,9 @@ def yapay_zeka_buffett_analizi(sirket_adi, sektor, is_tanimi):
     Sen Warren Buffett tarzında düşünen kıdemli bir değer yatırımı analistisin.
     Şirket Adı: {sirket_adi} | Sektör: {sektor}
     İş Tanımı: {is_tanimi}
-    Lütfen bu şirketi Ekonomik Hendek, Anlaşılabilirlik ve Genel Buffett Kararı açısından 3 kısa başlıkla analiz et. Türkçe olsun.
+    Lütfen bu şirketi Ekonomik Hendek, Anlaşılabilirlik og Genel Buffett Kararı açısından 3 kısa başlıkla analiz et. Türkçe olsun.
     """
     try:
-        # 1. BÖLGE: Model tanımı güncel 'gemini-2.0-flash' olarak değiştirildi
         model = genai.GenerativeModel('gemini-2.0-flash')
         response = model.generate_content(prompt)
         if response and hasattr(response, 'text') and response.text:
@@ -104,7 +103,7 @@ with sekme1:
     ticker = st.text_input("Hisse Sembolü Girin:", value="AAPL", key="tek_hisse_input").strip().upper()
 
     if st.button("Kapsamlı Analizi Başlat", key="btn_tek_hisse"):
-        with st.spinner("Finansal tablolar inceleniyor, rakipler taranıyor ve AI raporu hazırlanıyor..."):
+        with st.spinner("Finansal tablolar inceleniyor, rakipler taranıyor..." ):
             try:
                 hisse = yf.Ticker(ticker)
                 info = hisse.info
@@ -166,7 +165,7 @@ with sekme1:
                         if ai_raporu:
                             st.info(ai_raporu)
                         else:
-                            st.warning("⚠️ Yapay zeka analizi şu an üretilemedi. Kota sınırını veya model ismini kontrol edin.")
+                            st.warning("⚠️ Yapay zeka analizi şu an üretilemedi.")
                             
             except Exception as e:
                 st.error(f"Veriler okunurken teknik bir sorun oluştu: {e}")
@@ -174,74 +173,74 @@ with sekme1:
 # --- SEKME 2: TÜM NASDAQ BORSASI ALIM GÜCÜ TARAYICISI ---
 with sekme2:
     st.header("🏆 NASDAQ Değer Odaklı Alım Gücü Tarayıcısı")
-    st.write("Aşağıdaki sistem NASDAQ borsasındaki lider dev şirketleri anlık rasyolarına göre filtreler ve en yüksek alım gücü puanına göre sıralar.")
+    st.write("Aşağıdaki sistem NASDAQ borsasındaki lider dev şirketleri anlık rasyolarına göre filtreler.")
     
     if st.button("NASDAQ Borsasını Tara ve Sırala", key="btn_nasdaq_tarayici"):
-        NASDAQ_HAVUZU = ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA", "AVGO", "COST", "NFLX", "AMD", "PEP", "INTC", "QCOM", "TXN"]
+        with st.spinner("NASDAQ verileri çekiliyor ve hesaplanıyor..."):
+            NASDAQ_HAVUZU = ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA", "AVGO", "COST", "NFLX", "AMD", "PEP", "INTC", "QCOM", "TXN"]
+            
+            tarama_sonuclari = []
+            ilerleme_cubugu = st.progress(0)
+            
+            for index, sembol in enumerate(NASDAQ_HAVUZU):
+                try:
+                    hisse = yf.Ticker(sembol)
+                    info = hisse.info
+                    
+                    roe = info.get('returnOnEquity', 0) * 100
+                    brut_marj = info.get('grossMargins', 0) * 100
+                    fk = info.get('trailingPE', 0)
+                    fiyat = info.get('currentPrice', 0)
+                    
+                    if fk and fk > 0:
+                        alim_gucu_puani = (roe * 0.5) + (brut_marj * 0.5) - (fk * 0.1)
+                    else:
+                        alim_gucu_puani = (roe * 0.5) + (brut_marj * 0.5)
+                    
+                    tarama_sonuclari.append({
+                        "Hisse": sembol,
+                        "Şirket Adı": info.get('shortName', sembol),
+                        "Fiyat ($)": fiyat,
+                        "ROE (%)": round(roe, 1),
+                        "Brüt Marj (%)": round(brut_marj, 1),
+                        "F/K Oranı": round(fk, 1) if fk else "N/A",
+                        "Alım Gücü Puanı": round(alim_gucu_puani, 1)
+                    })
+                except:
+                    continue
+                ilerleme_cubugu.progress((index + 1) / len(NASDAQ_HAVUZU))
+                
+            df = pd.DataFrame(tarama_sonuclari)
+            if not df.empty:
+                df = df.sort_values(by="Alım Gücü Puanı", ascending=False).reset_index(drop=True)
+                
+                # VERİLERİ SESSION STATE'E KAYDEDİYORUZ (Hafızaya Alıyoruz)
+                st.session_state["nasdaq_df"] = df
+                st.session_state["en_iyi_hisse"] = df.iloc[0]["Hisse"]
+                st.session_state["en_iyi_ad"] = df.iloc[0]["Şirket Adı"]
+                st.session_state["en_iyi_puan"] = df.iloc[0]["Alım Gücü Puanı"]
+
+    # Hafızada tarama verisi varsa, butonlardan bağımsız olarak ekrana basıyoruz
+    if "nasdaq_df" in st.session_state:
+        df = st.session_state["nasdaq_df"]
+        en_iyi_hisse = st.session_state["en_iyi_hisse"]
+        en_iyi_ad = st.session_state["en_iyi_ad"]
+        en_iyi_puan = st.session_state["en_iyi_puan"]
         
-        tarama_sonuclari = []
-        ilerleme_cubugu = st.progress(0)
+        st.subheader("🥇 Algoritmik Alım Gücü Sıralama Sonuçları")
+        st.dataframe(df, use_container_width=True, hide_index=True)
         
-        for index, sembol in enumerate(NASDAQ_HAVUZU):
-            try:
-                hisse = yf.Ticker(sembol)
-                info = hisse.info
-                
-                roe = info.get('returnOnEquity', 0) * 100
-                brut_marj = info.get('grossMargins', 0) * 100
-                fk = info.get('trailingPE', 0)
-                fiyat = info.get('currentPrice', 0)
-                
-                if fk and fk > 0:
-                    alim_gucu_puani = (roe * 0.5) + (brut_marj * 0.5) - (fk * 0.1)
-                else:
-                    alim_gucu_puani = (roe * 0.5) + (brut_marj * 0.5)
-                
-                tarama_sonuclari.append({
-                    "Hisse": sembol,
-                    "Şirket Adı": info.get('shortName', sembol),
-                    "Fiyat ($)": fiyat,
-                    "ROE (%)": round(roe, 1),
-                    "Brüt Marj (%)": round(brut_marj, 1),
-                    "F/K Oranı": round(fk, 1) if fk else "N/A",
-                    "Alım Gücü Puanı": round(alim_gucu_puani, 1)
-                })
-            except:
-                continue
-            ilerleme_cubugu.progress((index + 1) / len(NASDAQ_HAVUZU))
-            
-        df = pd.DataFrame(tarama_sonuclari)
-        if not df.empty:
-            df = df.sort_values(by="Alım Gücü Puanı", ascending=False).reset_index(drop=True)
-            
-            st.subheader("🥇 Algoritmik Alım Gücü Sıralama Sonuçları")
-            st.dataframe(df, use_container_width=True, hide_index=True)
-            
-            # Şampiyonu AI'ye yorumlatma
-            en_iyi_hisse = df.iloc[0]["Hisse"]
-            en_iyi_ad = df.iloc[0]["Şirket Adı"]
-            en_iyi_puan = df.iloc[0]["Alım Gücü Puanı"]
-            
-            st.success(f"🏆 Tarama Şampiyonu: **{en_iyi_ad} ({en_iyi_hisse})** - Puan: {en_iyi_puan}")
-            
+        st.success(f"🏆 Tarama Şampiyonu: **{en_iyi_ad} ({en_iyi_hisse})** - Puan: {en_iyi_puan}")
+        
+        st.divider()
+        
+        # AI Analiz Butonu Artık Tamamen Güvenli ve Bağımsız Çalışıyor
+        if st.button(f"🤖 {en_iyi_hisse} İçin Yapay Zeka Buffett Raporu Oluştur", key="btn_nasdaq_ai"):
             with st.spinner(f"Yapay Zeka, günün şampiyonu {en_iyi_hisse} için özel analiz hazırlıyor..."):
-                # Rapor oluşturma işlemini bir butona bağlıyoruz
-if st.button(f"🤖 {en_iyi_hisse} İçin Yapay Zeka Buffett Raporu Oluştur"):
-    with st.spinner(f"Yapay Zeka, günün şampiyonu {en_iyi_hisse} için özel analiz hazırlıyor..."):
-        try:
-            prompt_top = f"NASDAQ taramasında ROE, Brüt Marj ve F/K dengesine göre en yüksek puanı {en_iyi_ad} ({en_iyi_hisse}) aldı. Bu şirketin finansallarını yorumla..."
-            model = genai.GenerativeModel('gemini-2.0-flash')
-            cevap = model.generate_content(prompt_top)
-            st.info(cevap.text)
-        except Exception as ai_err:
-            st.error(f"AI Raporu oluşturulamadı: {ai_err}")
                 try:
                     prompt_top = f"NASDAQ taramasında ROE, Brüt Marj ve F/K dengesine göre en yüksek puanı {en_iyi_ad} ({en_iyi_hisse}) aldı. Bu şirketin neden lider çıktığını ve geleceğini yatırımcı gözüyle yorumla."
-                    # 2. BÖLGE: Model tanımı güncel 'gemini-2.0-flash' olarak değiştirildi
                     model = genai.GenerativeModel('gemini-2.0-flash')
                     cevap = model.generate_content(prompt_top)
                     st.info(cevap.text)
                 except Exception as ai_err:
                     st.error(f"AI Raporu oluşturulamadı: {ai_err}")
-        else:
-            st.error("Borsa verileri çekilemedi. Lütfen bağlantınızı kontrol edin.")
