@@ -225,6 +225,16 @@ with sekme2:
             st.success(f"🏆 Tarama Şampiyonu: **{en_iyi_ad} ({en_iyi_hisse})** - Puan: {en_iyi_puan}")
             
             with st.spinner(f"Yapay Zeka, günün şampiyonu {en_iyi_hisse} için özel analiz hazırlıyor..."):
+                # Rapor oluşturma işlemini bir butona bağlıyoruz
+if st.button(f"🤖 {en_iyi_hisse} İçin Yapay Zeka Buffett Raporu Oluştur"):
+    with st.spinner(f"Yapay Zeka, günün şampiyonu {en_iyi_hisse} için özel analiz hazırlıyor..."):
+        try:
+            prompt_top = f"NASDAQ taramasında ROE, Brüt Marj ve F/K dengesine göre en yüksek puanı {en_iyi_ad} ({en_iyi_hisse}) aldı. Bu şirketin finansallarını yorumla..."
+            model = genai.GenerativeModel('gemini-2.0-flash')
+            cevap = model.generate_content(prompt_top)
+            st.info(cevap.text)
+        except Exception as ai_err:
+            st.error(f"AI Raporu oluşturulamadı: {ai_err}")
                 try:
                     prompt_top = f"NASDAQ taramasında ROE, Brüt Marj ve F/K dengesine göre en yüksek puanı {en_iyi_ad} ({en_iyi_hisse}) aldı. Bu şirketin neden lider çıktığını ve geleceğini yatırımcı gözüyle yorumla."
                     # 2. BÖLGE: Model tanımı güncel 'gemini-2.0-flash' olarak değiştirildi
