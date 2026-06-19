@@ -228,7 +228,7 @@ with sekme2:
                 try:
                     prompt_top = f"NASDAQ taramasında ROE, Brüt Marj ve F/K dengesine göre en yüksek puanı {en_iyi_ad} ({en_iyi_hisse}) aldı. Bu şirketin neden lider çıktığını ve geleceğini yatırımcı gözüyle yorumla."
                     # Burada da tam uyumlu model olan gemini-pro'ya geçiş yaptık
-                    model = genai.GenerativeModel('gemini-pro')
+                    model = genai.GenerativeModel('gemini-2.0-flash')
                     cevap = model.generate_content(prompt_top)
                     st.info(cevap.text)
                 except Exception as ai_err:
