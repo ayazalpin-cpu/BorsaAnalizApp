@@ -64,14 +64,14 @@ def yapay_zeka_buffett_analizi(sirket_adi, sektor, is_tanimi):
     Lütfen bu şirketi Ekonomik Hendek, Anlaşılabilirlik ve Genel Buffett Kararı açısından 3 kısa başlıkla analiz et. Türkçe olsun.
     """
     try:
-        # Eski/yeni kütüphane versiyonlarının hepsiyle uyumlu model olan gemini-pro'ya geçtik
-        model = genai.GenerativeModel('gemini-pro')
+        # 1. BÖLGE: Model tanımı güncel 'gemini-2.0-flash' olarak değiştirildi
+        model = genai.GenerativeModel('gemini-2.0-flash')
         response = model.generate_content(prompt)
         if response and hasattr(response, 'text') and response.text:
             return response.text.strip()
         return None
-    except:
-        return None
+    except Exception as e:
+        return f"AI Raporu Hatası: {e}"
 
 def rakip_verilerini_topla(ana_ticker, rakipler):
     veriler = []
@@ -227,7 +227,7 @@ with sekme2:
             with st.spinner(f"Yapay Zeka, günün şampiyonu {en_iyi_hisse} için özel analiz hazırlıyor..."):
                 try:
                     prompt_top = f"NASDAQ taramasında ROE, Brüt Marj ve F/K dengesine göre en yüksek puanı {en_iyi_ad} ({en_iyi_hisse}) aldı. Bu şirketin neden lider çıktığını ve geleceğini yatırımcı gözüyle yorumla."
-                    # Burada da tam uyumlu model olan gemini-pro'ya geçiş yaptık
+                    # 2. BÖLGE: Model tanımı güncel 'gemini-2.0-flash' olarak değiştirildi
                     model = genai.GenerativeModel('gemini-2.0-flash')
                     cevap = model.generate_content(prompt_top)
                     st.info(cevap.text)
