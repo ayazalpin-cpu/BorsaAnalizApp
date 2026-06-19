@@ -64,7 +64,8 @@ def yapay_zeka_buffett_analizi(sirket_adi, sektor, is_tanimi):
     Lütfen bu şirketi Ekonomik Hendek, Anlaşılabilirlik ve Genel Buffett Kararı açısından 3 kısa başlıkla analiz et. Türkçe olsun.
     """
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        # Eski/yeni kütüphane versiyonlarının hepsiyle uyumlu model olan gemini-pro'ya geçtik
+        model = genai.GenerativeModel('gemini-pro')
         response = model.generate_content(prompt)
         if response and hasattr(response, 'text') and response.text:
             return response.text.strip()
@@ -94,7 +95,7 @@ def rakip_verilerini_topla(ana_ticker, rakipler):
 # --- 3. STREAMLIT ARAYÜZÜ ---
 st.title("🚀 Buffett AI Pro: Finansal Analiz & Tarama Dünyası")
 
-# Sayfayı iki büyük sekmeye ayırıyoruz
+# Sayfayı iki sekmeye ayırıyoruz
 sekme1, sekme2 = st.tabs(["🔍 Tek Hisse Analizi & Rakipler", "🏆 NASDAQ Alım Gücü Tarayıcısı"])
 
 # --- SEKME 1: TEK HİSSE DETAYLI ANALİZ ---
@@ -191,7 +192,6 @@ with sekme2:
                 fk = info.get('trailingPE', 0)
                 fiyat = info.get('currentPrice', 0)
                 
-                # Algoritma: Yüksek ROE, Yüksek Marj artı puan; yüksek F/K eksi puan getirir
                 if fk and fk > 0:
                     alim_gucu_puani = (roe * 0.5) + (brut_marj * 0.5) - (fk * 0.1)
                 else:
@@ -227,7 +227,8 @@ with sekme2:
             with st.spinner(f"Yapay Zeka, günün şampiyonu {en_iyi_hisse} için özel analiz hazırlıyor..."):
                 try:
                     prompt_top = f"NASDAQ taramasında ROE, Brüt Marj ve F/K dengesine göre en yüksek puanı {en_iyi_ad} ({en_iyi_hisse}) aldı. Bu şirketin neden lider çıktığını ve geleceğini yatırımcı gözüyle yorumla."
-                    model = genai.GenerativeModel('gemini-1.5-flash')
+                    # Burada da tam uyumlu model olan gemini-pro'ya geçiş yaptık
+                    model = genai.GenerativeModel('gemini-pro')
                     cevap = model.generate_content(prompt_top)
                     st.info(cevap.text)
                 except Exception as ai_err:
